@@ -1,4 +1,4 @@
-resource "aws_vpc" "default" {
+resource "aws_vpc" "vpc" {
     cidr_block = "${var.vpc_cidr}"
     enable_dns_hostnames = true
     tags = {
@@ -8,49 +8,38 @@ resource "aws_vpc" "default" {
     }
 }
 
-resource "aws_internet_gateway" "default" {
-    vpc_id = "${aws_vpc.default.id}"
+resource "aws_internet_gateway" "igw" {
+    vpc_id = "${aws_vpc.vpc.id}"
 	tags = {
         Name = "${var.IGW_name}"
     }
 }
 
-resource "aws_subnet" "subnet1-public" {
-    vpc_id = "${aws_vpc.default.id}"
-    cidr_block = "${var.public_subnet1_cidr}"
+resource "aws_subnet" "subnet-public" {
+    vpc_id = "${aws_vpc.vpc.id}"
+    cidr_block = "${var.public_subnet_cidr}"
     availability_zone = "us-east-1a"
 
     tags = {
-        Name = "${var.public_subnet1_name}"
+        Name = "${var.public_subnet_name}"
     }
 }
 
-resource "aws_subnet" "subnet2-public" {
-    vpc_id = "${aws_vpc.default.id}"
-    cidr_block = "${var.public_subnet2_cidr}"
+resource "aws_subnet" "subnet-private" {
+    vpc_id = "${aws_vpc.vpc.id}"
+    cidr_block = "${var.private_subnet_cidr}"
     availability_zone = "us-east-1b"
 
     tags = {
-        Name = "${var.public_subnet2_name}"
+        Name = "${var.private_subnet_name}"
     }
-}
-
-resource "aws_subnet" "subnet3-public" {
-    vpc_id = "${aws_vpc.default.id}"
-    cidr_block = "${var.public_subnet3_cidr}"
-    availability_zone = "us-east-1c"
-
-    tags = {
-        Name = "${var.public_subnet3_name}"
-    }
-	
 }
 resource "aws_route_table" "terraform-public" {
-    vpc_id = "${aws_vpc.default.id}"
+    vpc_id = "${aws_vpc.vpc.id}"
 
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.default.id}"
+        gateway_id = "${aws_internet_gateway.igw.id}"
     }
 
     tags = {
@@ -59,14 +48,14 @@ resource "aws_route_table" "terraform-public" {
 }
 
 resource "aws_route_table_association" "terraform-public" {
-    subnet_id = "${aws_subnet.subnet1-public.id}"
+    subnet_id = "${aws_subnet.subnet-public.id}"
     route_table_id = "${aws_route_table.terraform-public.id}"
 }
 
 resource "aws_security_group" "allow_all" {
   name        = "allow_all"
   description = "Allow all inbound traffic"
-  vpc_id      = "${aws_vpc.default.id}"
+  vpc_id      = "${aws_vpc.vpc.id}"
 
   ingress {
     from_port   = 0
